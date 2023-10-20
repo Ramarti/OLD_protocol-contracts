@@ -265,6 +265,12 @@ library Errors {
     //                            RelationshipRegistry                        //
     ////////////////////////////////////////////////////////////////////////////
 
+    error RelationshipRegistry_RelationshipHaveZeroAddress();
+    error RelationshipRegistry_RelatingSameAsset();
+    error RelationshipRegistry_UnsupportedRelatedElements();
+    error RelationshipRegistry_CallerNotModuleRegistry();
+    error RelationshipRegistry_RelationshipAlreadyExists();
+    error RelationshipRegistry_RelationshipDoesNotExist();
 
 
     ////////////////////////////////////////////////////////////////////////////

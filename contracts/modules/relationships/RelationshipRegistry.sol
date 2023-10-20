@@ -9,14 +9,13 @@ import { Errors } from "contracts/lib/Errors.sol";
 /// - Between (address, uint) and (address, uint)
 /// - Between (address, uint) and (address)
 /// - Between (address) and (address, uint)
-/// Relationships have a type identifier, which a bytes32 value obtained from 
+/// Relationships have a type identifier, which a bytes32 value obtained from
 /// keccak256(relationshipName).
 /// Every relationship created will have a unique identifier, a sequential integer
 /// starting from 1, that allows it to be referenced across the protocol.
-/// TODO: This contract can only be called by a relationship module registered in the
+/// TODO: This contract can only be written to by a relationship module registered in the
 /// ModuleRegistry.
 contract RelationshipRegistry {
-
     enum RelatedElemets {
         ADDRESS_UINT_TO_ADDRESS_UINT,
         ADDRESS_UINT_TO_ADDRESS,
@@ -32,8 +31,8 @@ contract RelationshipRegistry {
         uint256 dstId;
     }
 
-    struct CreateRelationshipParams {
-        bytes32 typeId;
+    struct SetRelationshipParams {
+        string typeName;
         RelatedElemets relatedElements;
         address srcAddress;
         address dstAddress;
@@ -41,9 +40,8 @@ contract RelationshipRegistry {
         uint256 dstId;
     }
 
-    event RelationshipCreated(
+    event RelationshipSet(
         uint256 indexed relationshipId,
-        bytes32 indexed typeId,
         string typeName,
         RelatedElemets relatedElements,
         address srcAddress,
@@ -52,7 +50,9 @@ contract RelationshipRegistry {
         uint256 dstId
     );
 
-    uint256 public totalRelationships;
+    event RelationshipUnset(uint256 indexed relationshipId);
+
+    uint256 private _relationshipIdCounter;
     mapping(uint256 => Relationship) private _relationships;
     mapping(bytes32 => uint256) private _setRelationships;
 
@@ -60,23 +60,110 @@ contract RelationshipRegistry {
 
     constructor(address moduleRegistry_) {
         if (moduleRegistry_ == address(0)) {
-            revert("RelationshipRegistry: Module registry cannot be zero address");
+            revert Errors.RelationshipRegistry_ModuleRegistryZeroAddress();
         }
         MODULE_REGISTRY = moduleRegistry_;
     }
 
-
-    function createRelationship(CreateRelationshipParams calldata params_) external {
+    function setRelationship(SetRelationshipParams calldata params_) external {
         _validateParams(params_);
-
+        // TODO: Validate that typeName can be set by the caller
+        Relationship memory rel = Relationship(
+            getRelationsipTypeId(params_.typeName),
+            params_.relatedElements,
+            params_.srcAddress,
+            params_.dstAddress,
+            params_.srcId,
+            params_.dstId
+        );
+        bytes32 relHash = getRelationshipHash(rel);
+        if (isRelationshipSet(relHash)) {
+            revert Errors.RelationshipRegistry_RelationshipAlreadyExists();
+        }
+        unchecked {
+            _relationshipIdCounter++;
+        }
+        _relationships[_relationshipIdCounter] = rel;
+        _setRelationships[relHash] = _relationshipIdCounter;
+        emit RelationshipSet(
+            _relationshipIdCounter,
+            params_.typeName,
+            params_.relatedElements,
+            params_.srcAddress,
+            params_.dstAddress,
+            params_.srcId,
+            params_.dstId
+        );
     }
 
-    function getRelationshipHash(Relationship calldata rel_) external pure returns (bytes32) {
-        return keccak256(abi.encode(relationship));
+    function unsetRelationship(bytes32 relationshipHash_) external {
+        if (!isRelationshipSet(relationshipHash_)) {
+            revert Errors.RelationshipRegistry_RelationshipDoesNotExist();
+        }
+        uint256 relationshipId = _setRelationships[relationshipHash_];
+        delete _setRelationships[relationshipHash_];
+        delete _relationships[relationshipId];
+        emit RelationshipUnset(relationshipId);
     }
 
-    function _validateParams(CreateRelationshipParams calldata params_) private pure {
-        if (params_.srcAddress == address(0) || params_.dstAddress == address(0)) {
+    function getRelationshipId(
+        Relationship calldata rel_
+    ) external view returns (uint256) {
+        return _setRelationships[getRelationshipHash(rel_)];
+    }
+
+    function getRelationshipIdFromRelHash(
+        bytes32 relationshipHash_
+    ) external view returns (uint256) {
+        return _setRelationships[relationshipHash_];
+    }
+
+    function isRelationshipSet(
+        Relationship calldata rel_
+    ) external view returns (bool) {
+        return _setRelationships[getRelationshipHash(rel_)] != 0;
+    }
+
+    function getRelationship(
+        uint256 relationshipId_
+    ) external view returns (Relationship memory) {
+        return _relationships[relationshipId_];
+    }
+
+    function isRelationshipSet(
+        bytes32 relationshipHash_
+    ) public view returns (bool) {
+        return _setRelationships[relationshipHash_] != 0;
+    }
+
+    function getRelationsipTypeId(
+        string calldata typeName_
+    ) public pure returns (bytes32) {
+        return keccak256(abi.encode(typeName_));
+    }
+
+    function getRelationshipHash(
+        Relationship memory rel_
+    ) public pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    rel_.typeId,
+                    rel_.relatedElements,
+                    rel_.srcAddress,
+                    rel_.dstAddress,
+                    rel_.srcId,
+                    rel_.dstId
+                )
+            );
+    }
+
+    function _validateParams(
+        SetRelationshipParams calldata params_
+    ) private pure {
+        if (
+            params_.srcAddress == address(0) || params_.dstAddress == address(0)
+        ) {
             revert Errors.RelationshipRegistry_RelationshipHaveZeroAddress();
         }
         if (
@@ -86,8 +173,15 @@ contract RelationshipRegistry {
             if (params_.srcAddress == params_.dstAddress) {
                 revert Errors.RelationshipRegistry_RelatingSameAsset();
             }
-        } if (params_.relatedElements == RelatedElemets.ADDRESS_UINT_TO_ADDRESS_UINT) {
-            if (params_.srcAddress == params_.dstAddress && params_.srcId == params_.dstId) {
+        }
+        if (
+            params_.relatedElements ==
+            RelatedElemets.ADDRESS_UINT_TO_ADDRESS_UINT
+        ) {
+            if (
+                params_.srcAddress == params_.dstAddress &&
+                params_.srcId == params_.dstId
+            ) {
                 revert Errors.RelationshipRegistry_RelatingSameAsset();
             }
         } else {
