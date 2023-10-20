@@ -38,10 +38,13 @@ library Errors {
     //                            HookRegistry                                //
     ////////////////////////////////////////////////////////////////////////////
 
-    /// @notice The hook is already registered.
+    /// @notice The hooks array have a duplicated address
     error HookRegistry_RegisteringDuplicatedHook();
+    /// @notice The hooks array have a zero address
     error HookRegistry_RegisteringZeroAddressHook();
+    /// @notice caller is not the admin of HookRegistry
     error HookRegistry_CallerNotAdmin();
+    /// @notice The hooks array is longer than supported
     error HookRegistry_MaxHooksExceeded();
 
     ////////////////////////////////////////////////////////////////////////////
@@ -257,6 +260,12 @@ library Errors {
 
     /// @notice Too many terms were selected.
     error MultiTermsProcessor_TooManyTermsProcessors();
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                            RelationshipRegistry                        //
+    ////////////////////////////////////////////////////////////////////////////
+
+
 
     ////////////////////////////////////////////////////////////////////////////
     //                            RelationshipModule                          //
