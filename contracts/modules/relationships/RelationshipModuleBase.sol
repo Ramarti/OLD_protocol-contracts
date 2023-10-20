@@ -9,7 +9,7 @@ import { ZeroAddress, UnsupportedInterface, Unauthorized } from "contracts/error
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
-import { LibIPAssetMask } from "./LibIPAssetMask.sol";
+import { LibIPAssetMask } from "contracts/lib/LibIPAssetMask.sol";
 import { IRelationshipModule } from "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
 import { IRelationshipProcessor } from "contracts/interfaces/modules/relationships/processors/IRelationshipProcessor.sol";
 import { Errors } from "contracts/lib/Errors.sol";
