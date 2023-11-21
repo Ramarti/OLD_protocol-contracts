@@ -15,12 +15,13 @@ async function main(hre) {
         });
     }
     const contracts = {}
-    contracts.IPOrgController = await ethers.getContractFactory("IPOrgController-Proxy");
+    contracts.IPOrgController = await ethers.getContractFactory("IPOrgController");
+    console.log("IPOrgController-Proxy:", deployment.main["IPOrgController-Proxy"]);
     contracts.ipOrgController = await contracts.IPOrgController.attach(deployment.main["IPOrgController-Proxy"]);
     contracts.IPAssetsRegistry = await ethers.getContractFactory("IPAssetRegistry");
     contracts.ipAssetsRegistry = await contracts.IPAssetsRegistry.attach(deployment.main["IPAssetRegistry"]);
     contracts.RegistrationModule = await ethers.getContractFactory("RegistrationModule");
-    contracts.registrationModule = await contracts.RegistrationModule.attach(deployment.main["RegistrationModule-Proxy"]);
+    contracts.registrationModule = await contracts.RegistrationModule.attach(deployment.main["RegistrationModule"]);
     contracts.LicenseRegistry = await ethers.getContractFactory("LicenseRegistry");
     contracts.licenseRegistry = await contracts.LicenseRegistry.attach(deployment.main["LicenseRegistry"]);
     contracts.LicensingModule = await ethers.getContractFactory("LicensingModule");

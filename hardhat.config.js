@@ -9,10 +9,8 @@ require('@nomiclabs/hardhat-ethers');
 require("@nomiclabs/hardhat-etherscan");
 require('@openzeppelin/hardhat-upgrades');
 
-const createFranchise = require("./script/hardhat/createFranchise.js");
+const createIpOrg = require("./script/hardhat/createIpOrg.js");
 const createIPAsset = require("./script/hardhat/createIPAsset.js");
-const getIPAssetRegistryAddress = require("./script/hardhat/getIPAssetRegistryAddress.js");
-const getIPAsset = require("./script/hardhat/getIPAsset.js");
 const batchUploader = require("./script/hardhat/batchUploader.js");
 const namespacedStorageKey = require("./script/hardhat/namespacedStorageKey.js");
 const { task } = require("hardhat/config");
@@ -27,19 +25,13 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
-task('sp:create-franchise')
+task('sp:create-iporg')
     .addPositionalParam('name', 'Franchise name')
     .addPositionalParam('symbol', 'Franchise symbol')
-    .addPositionalParam('description', 'Franchise description')
-    .addPositionalParam('tokenURI', 'Franchise token URI (arweave URL with metadata)')
+    //.addPositionalParam('tokenURI', 'Franchise token URI (arweave URL with metadata)')
     .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
-    .setDescription('Mint Franchise NFT and create IPAssetsRegistry contract')
-    .setAction(createFranchise);
-
-task('sp:get-ip-asset-registry-address')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Asset in, as given by FranchiseRegistry contract')
-    .setDescription('Get the address of the IPAssetsRegistry contract for the given Franchise')
-    .setAction(getIPAssetRegistryAddress);
+    .setDescription('Create an ipOrg contract and its initial definition')
+    .setAction(createIpOrg);
 
 task('sp:create-ip-asset')
     .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Asset in, as given by FranchiseRegistry contract')
@@ -50,12 +42,6 @@ task('sp:create-ip-asset')
     .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
     .setDescription('Mint IP Asset NFT and create IPAssetsRegistry contract')
     .setAction(createIPAsset);
-
-task('sp:read-ip-asset')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Asset in, as given by FranchiseRegistry contract')
-    .addPositionalParam('ipAssetId', 'Id of the IP Asset to read')
-    .setDescription('Get the IP Asset details')
-    .setAction(getIPAsset);
 
 task('sp:uploader')
     .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Assets in, as given by FranchiseRegistry contract')
@@ -94,6 +80,11 @@ module.exports = {
       url: process.env.GOERLI_RPC_URL || "",
       chainId: 5,
       accounts: [process.env.GOERLI_PRIVATEKEY || "0x1234567890123456789012345678901234567890123456789012345678901234"]
+    },
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL || "",
+      chainId: 11155111,
+      accounts: [process.env.SEPOLIA_PRIVATEKEY || "0x1234567890123456789012345678901234567890123456789012345678901234"]
     },
     local: {
       url: "http://127.0.0.1:8545",
